@@ -3,7 +3,7 @@ package com.egg.jumpadventures.ui.main.gamescreen
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -32,6 +32,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.consume
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -58,7 +60,7 @@ fun GameScreen(
 
     LaunchedEffect(state.running, state.isPaused, state.isGameOver) {
         while (state.running && !state.isPaused && !state.isGameOver) {
-            delay(280)
+            delay(16)
             viewModel.tick()
         }
     }
@@ -92,7 +94,7 @@ fun GameScreen(
                 )
             )
     ) {
-        GameField(state = state, onCollect = viewModel::collectCoin)
+        GameField(state = state, onDrag = viewModel::movePlayer)
 
         GameHud(
             coins = state.coins,
@@ -179,11 +181,18 @@ private fun GameHud(
 }
 
 @Composable
-private fun GameField(state: GameUiState, onCollect: (Int) -> Unit) {
+private fun GameField(state: GameUiState, onDrag: (Float) -> Unit) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 72.dp, bottom = 24.dp)
+            .pointerInput(state.running, state.isPaused) {
+                detectDragGestures { change, dragAmount ->
+                    val widthPx = size.width.toFloat().coerceAtLeast(1f)
+                    onDrag(dragAmount.x / widthPx)
+                    change.consume()
+                }
+            }
     ) {
         val width = maxWidth
         val height = maxHeight
@@ -209,19 +218,18 @@ private fun GameField(state: GameUiState, onCollect: (Int) -> Unit) {
                 modifier = Modifier
                     .size(28.dp)
                     .offset(x = x - 14.dp, y = y)
-                    .clickable { onCollect(coin.id) }
             )
         }
 
-        val playerY = height * 0.62f
-        val playerX = width * 0.5f
+        val playerY = height * state.playerY
+        val playerX = width * state.playerX
         Image(
             painter = painterResource(id = state.selectedSkin.playerSprite),
             contentDescription = null,
             modifier = Modifier
                 .width(96.dp)
                 .height(96.dp)
-                .offset(x = playerX - 48.dp, y = playerY)
+                .offset(x = playerX - 48.dp, y = playerY - 48.dp)
         )
     }
 }
