@@ -36,7 +36,7 @@ private val WarmDarkColorScheme = darkColorScheme(
 )
 
 @Composable
-fun ChickenPopTheme(
+fun EggJumpAdventures(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit

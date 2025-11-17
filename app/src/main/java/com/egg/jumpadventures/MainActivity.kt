@@ -8,7 +8,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.egg.jumpadventures.ui.main.root.AppRoot
-import com.egg.jumpadventures.ui.theme.ChickenPopTheme
+import com.egg.jumpadventures.ui.theme.EggJumpAdventures
 import com.egg.feedthechick.audio.AudioController
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         hideSystemBars()
 
         setContent {
-            ChickenPopTheme {
+            EggJumpAdventures {
                 AppRoot()
             }
         }
