@@ -5,10 +5,18 @@ import com.egg.jumpadventures.ui.main.menuscreen.model.EggSkin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.math.abs
 import kotlin.random.Random
 
-private const val PLATFORM_COUNT = 6
-private const val COIN_COUNT = 8
+private const val PLATFORM_COUNT = 8
+private const val COIN_COUNT = 6
+private const val GRAVITY = 0.0014f
+private const val JUMP_FORCE = -0.028f
+private const val CAMERA_ANCHOR = 0.35f
+private const val PLAYER_FALL_LIMIT = 1.05f
+private const val HEIGHT_PER_UNIT = 240
+private const val PLATFORM_HIT_X = 0.18f
+private const val PLATFORM_HIT_Y = 0.06f
 
 class GameViewModel : ViewModel() {
 
@@ -36,7 +44,10 @@ class GameViewModel : ViewModel() {
                 height = 0,
                 coins = 0,
                 platforms = seedPlatforms(),
-                coinsOnField = seedCoins()
+                coinsOnField = seedCoins(),
+                playerX = 0.5f,
+                playerY = 0.8f,
+                verticalVelocity = JUMP_FORCE
             )
         }
     }
@@ -51,7 +62,10 @@ class GameViewModel : ViewModel() {
                 height = 0,
                 coins = 0,
                 platforms = seedPlatforms(),
-                coinsOnField = seedCoins()
+                coinsOnField = seedCoins(),
+                playerX = 0.5f,
+                playerY = 0.8f,
+                verticalVelocity = JUMP_FORCE
             )
         }
     }
@@ -76,68 +90,115 @@ class GameViewModel : ViewModel() {
         showIntroOnEnter()
     }
 
+    fun movePlayer(delta: Float) {
+        _state.update { state ->
+            if (!state.running || state.isPaused || state.isGameOver) return@update state
+            val moved = wrapPosition(state.playerX + delta)
+            state.copy(playerX = moved)
+        }
+    }
+
     fun tick() {
         _state.update { state ->
             if (!state.running || state.isPaused || state.isGameOver) return@update state
 
-            var collectedCoins = state.coins
-            val movedCoins = state.coinsOnField.map { coin ->
-                val newY = coin.y + 0.08f
-                when {
-                    newY in 0.45f..0.55f -> {
-                        collectedCoins += 1
-                        coin.copy(x = randomX(), y = respawnY())
-                    }
+            var playerX = wrapPosition(state.playerX)
+            var playerY = state.playerY + state.verticalVelocity
+            var velocityY = state.verticalVelocity + GRAVITY
+            var platforms = state.platforms
+            var coinsOnField = state.coinsOnField
+            var coins = state.coins
+            var height = state.height
+            var running = state.running
+            var isGameOver = state.isGameOver
 
-                    newY > 1.1f -> coin.copy(x = randomX(), y = respawnY())
-                    else -> coin.copy(y = newY)
+            if (velocityY > 0f) {
+                val landingPlatform = platforms.firstOrNull { platform ->
+                    val closeX = wrapDelta(playerX, platform.x) < PLATFORM_HIT_X
+                    val closeY = playerY in (platform.y - PLATFORM_HIT_Y)..platform.y
+                    closeX && closeY
+                }
+                if (landingPlatform != null) {
+                    velocityY = JUMP_FORCE
+                    playerY = landingPlatform.y - 0.08f
                 }
             }
 
-            val movedPlatforms = state.platforms.map { platform ->
-                val newY = platform.y + 0.12f
-                if (newY > 1.1f) platform.copy(x = randomX(), y = respawnY()) else platform.copy(y = newY)
+            coinsOnField = coinsOnField.map { coin ->
+                val dx = wrapDelta(playerX, coin.x)
+                val dy = abs(playerY - coin.y)
+                if (dx < 0.12f && dy < 0.12f) {
+                    coins += 1
+                    coin.copy(x = randomX(), y = respawnPlatformY())
+                } else {
+                    coin
+                }
             }
 
-            val newHeight = state.height + 3
-            val reachedLimit = newHeight >= 180
+            if (playerY < CAMERA_ANCHOR) {
+                val shift = CAMERA_ANCHOR - playerY
+                playerY = CAMERA_ANCHOR
+                platforms = platforms.map { it.copy(y = it.y + shift) }
+                coinsOnField = coinsOnField.map { it.copy(y = it.y + shift) }
+                height += (shift * HEIGHT_PER_UNIT).toInt()
+            }
+
+            platforms = platforms.map { platform ->
+                if (platform.y > 1.05f) platform.copy(x = randomX(), y = respawnPlatformY()) else platform
+            }
+
+            coinsOnField = coinsOnField.map { coin ->
+                if (coin.y > 1.05f) coin.copy(x = randomX(), y = respawnPlatformY()) else coin
+            }
+
+            if (playerY > PLAYER_FALL_LIMIT) {
+                running = false
+                isGameOver = true
+            }
 
             state.copy(
-                height = newHeight,
-                coins = collectedCoins,
-                platforms = movedPlatforms,
-                coinsOnField = movedCoins,
-                running = state.running && !reachedLimit,
-                isGameOver = state.isGameOver || reachedLimit
+                height = height,
+                coins = coins,
+                platforms = platforms,
+                coinsOnField = coinsOnField,
+                playerX = playerX,
+                playerY = playerY,
+                verticalVelocity = velocityY,
+                running = running,
+                isGameOver = isGameOver
             )
         }
     }
 
     fun currentResult(): GameResult = _state.value.let { GameResult(height = it.height, coins = it.coins) }
 
-    fun collectCoin(id: Int) {
-        _state.update { state ->
-            val coin = state.coinsOnField.firstOrNull { it.id == id } ?: return@update state
-            state.copy(
-                coins = state.coins + 1,
-                coinsOnField = state.coinsOnField.map {
-                    if (it.id == id) it.copy(x = randomX(), y = respawnY()) else it
-                }
-            )
-        }
+    private fun wrapPosition(value: Float): Float {
+        var wrapped = value
+        while (wrapped < 0f) wrapped += 1f
+        while (wrapped > 1f) wrapped -= 1f
+        return wrapped
     }
 
-    private fun seedPlatforms(): List<PlatformState> = List(PLATFORM_COUNT) { index ->
-        PlatformState(id = index, x = randomX(), y = random.nextFloat())
+    private fun wrapDelta(a: Float, b: Float): Float {
+        val diff = abs(a - b)
+        return minOf(diff, 1f - diff)
+    }
+
+    private fun seedPlatforms(): List<PlatformState> {
+        val spacing = 0.1f
+        return List(PLATFORM_COUNT) { index ->
+            val yPos = 0.2f + spacing * index + random.nextFloat() * 0.04f
+            PlatformState(id = index, x = randomX(), y = yPos.coerceAtMost(0.95f))
+        }
     }
 
     private fun seedCoins(): List<CoinState> = List(COIN_COUNT) { index ->
         CoinState(id = index, x = randomX(), y = random.nextFloat())
     }
 
-    private fun randomX(): Float = random.nextFloat().coerceIn(0.1f, 0.9f)
+    private fun randomX(): Float = random.nextFloat().coerceIn(0.05f, 0.95f)
 
-    private fun respawnY(): Float = -random.nextFloat() * 0.6f
+    private fun respawnPlatformY(): Float = -random.nextFloat() * 0.25f
 }
 
 
@@ -151,6 +212,9 @@ data class GameUiState(
     val selectedSkin: EggSkin = EggSkin.Classic,
     val platforms: List<PlatformState> = emptyList(),
     val coinsOnField: List<CoinState> = emptyList(),
+    val playerX: Float = 0.5f,
+    val playerY: Float = 0.8f,
+    val verticalVelocity: Float = JUMP_FORCE,
 )
 
 data class PlatformState(
