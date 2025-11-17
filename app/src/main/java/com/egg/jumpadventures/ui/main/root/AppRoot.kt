@@ -11,15 +11,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.egg.feedthechick.audio.rememberAudioController
-import com.egg.feedthechick.ui.main.gamescreen.GameScreen
-import com.egg.feedthechick.ui.main.menuscreen.MainViewModel
-import com.egg.feedthechick.ui.main.menuscreen.MenuScreen
-import com.egg.feedthechick.ui.main.menuscreen.PrivacyOverlay
-import com.egg.feedthechick.ui.main.menuscreen.SettingsOverlay
+import com.egg.jumpadventures.audio.rememberAudioController
+import com.egg.jumpadventures.ui.main.gamescreen.GameScreen
+import com.egg.jumpadventures.ui.main.gamescreen.GameResult
+import com.egg.jumpadventures.ui.main.menuscreen.MainViewModel
+import com.egg.jumpadventures.ui.main.menuscreen.MenuScreen
+import com.egg.jumpadventures.ui.main.menuscreen.overlay.PrivacyOverlay
+import com.egg.jumpadventures.ui.main.menuscreen.overlay.SettingsOverlay
+import com.egg.jumpadventures.ui.main.menuscreen.overlay.ShopOverlay
 
 @Composable
 fun AppRoot(
@@ -28,12 +31,14 @@ fun AppRoot(
     val ui by vm.ui.collectAsStateWithLifecycle()
     var showMenuSettings by rememberSaveable { mutableStateOf(false) }
     var showMenuPrivacy by rememberSaveable { mutableStateOf(false) }
+    var showShop by rememberSaveable { mutableStateOf(false) }
     val audio = rememberAudioController()
 
     LaunchedEffect(ui.screen) {
         if (ui.screen != MainViewModel.Screen.Menu) {
             showMenuSettings = false
             showMenuPrivacy = false
+            showShop = false
         }
         when (ui.screen) {
             MainViewModel.Screen.Menu -> audio.playMenuMusic()
@@ -44,20 +49,31 @@ fun AppRoot(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFF4D9))
+            .background(
+                brush = Brush.verticalGradient(
+                    listOf(
+                        Color(0xFFFFF3FF),
+                        Color(0xFFFFE0C9),
+                        Color(0xFFFFE9D0)
+                    )
+                )
+            )
     ) {
         Crossfade(targetState = ui.screen, label = "root_screen") { screen ->
             when (screen) {
                 MainViewModel.Screen.Menu ->
                     Box(Modifier.fillMaxSize()) {
                         MenuScreen(
+                            state = ui,
                             onStartGame = {
                                 showMenuSettings = false
                                 showMenuPrivacy = false
+                                showShop = false
                                 vm.startGame()
                             },
-                            lastScore = ui.lastScore.takeIf { it > 0 },
-                            onOpenSettings = { showMenuSettings = true }
+                            onOpenSettings = { showMenuSettings = true },
+                            onOpenShop = { showShop = true },
+                            onOpenPrivacy = { showMenuPrivacy = true }
                         )
 
                         if (showMenuSettings) {
@@ -73,11 +89,29 @@ fun AppRoot(
                         if (showMenuPrivacy) {
                             PrivacyOverlay(onClose = { showMenuPrivacy = false })
                         }
+
+                        if (showShop) {
+                            ShopOverlay(
+                                skins = vm.skins,
+                                owned = ui.ownedSkins,
+                                selected = ui.selectedSkin,
+                                coins = ui.coins,
+                                onClose = { showShop = false },
+                                onSelect = vm::selectSkin,
+                                onBuy = vm::buySkin
+                            )
+                        }
                     }
 
                 MainViewModel.Screen.Game ->
                     GameScreen(
-                        onExitToMenu = vm::backToMenu
+                        skin = ui.selectedSkin,
+                        onExitToMenu = { result: GameResult ->
+                            showMenuSettings = false
+                            showMenuPrivacy = false
+                            showShop = false
+                            vm.backToMenu(result)
+                        }
                     )
             }
         }

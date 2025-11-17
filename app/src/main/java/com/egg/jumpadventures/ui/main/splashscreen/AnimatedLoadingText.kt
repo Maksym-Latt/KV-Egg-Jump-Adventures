@@ -8,7 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.egg.feedthechick.ui.main.component.GradientOutlinedText
+import com.egg.jumpadventures.ui.main.component.GradientOutlinedText
 import kotlinx.coroutines.delay
 
 @Composable

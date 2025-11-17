@@ -2,8 +2,8 @@ package com.egg.jumpadventures.ui.main.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.egg.feedthechick.audio.AudioController
-import com.egg.feedthechick.data.settings.SettingsRepository
+import com.egg.jumpadventures.audio.AudioController
+import com.egg.jumpadventures.data.settings.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +24,8 @@ class SettingsViewModel @Inject constructor(
         val sound = repo.getSoundVolume()
         _ui.value = SettingsUiState(
             musicVolume = music,
-            soundVolume = sound
+            soundVolume = sound,
+            vibrationEnabled = true
         )
         audio.setMusicVolume(music)
         audio.setSoundVolume(sound)
@@ -42,5 +43,17 @@ class SettingsViewModel @Inject constructor(
         _ui.value = _ui.value.copy(soundVolume = v)
         viewModelScope.launch { repo.setSoundVolume(v) }
         audio.setSoundVolume(v)
+    }
+
+    fun toggleMusic(enabled: Boolean) {
+        setMusicVolume(if (enabled) 70 else 0)
+    }
+
+    fun toggleSound(enabled: Boolean) {
+        setSoundVolume(if (enabled) 80 else 0)
+    }
+
+    fun toggleVibration(enabled: Boolean) {
+        _ui.value = _ui.value.copy(vibrationEnabled = enabled)
     }
 }

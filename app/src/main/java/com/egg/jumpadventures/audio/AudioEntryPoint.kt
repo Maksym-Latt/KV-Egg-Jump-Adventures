@@ -1,4 +1,4 @@
-package com.egg.feedthechick.audio
+package com.egg.jumpadventures.audio
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
