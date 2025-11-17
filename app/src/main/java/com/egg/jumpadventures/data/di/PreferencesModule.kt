@@ -1,9 +1,9 @@
-package com.egg.feedthechick.data.di
+package com.egg.jumpadventures.data.di
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.egg.feedthechick.data.settings.SettingsRepository
-import com.egg.feedthechick.data.settings.SettingsRepositoryImpl
+import com.egg.jumpadventures.data.settings.SettingsRepository
+import com.egg.jumpadventures.data.settings.SettingsRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

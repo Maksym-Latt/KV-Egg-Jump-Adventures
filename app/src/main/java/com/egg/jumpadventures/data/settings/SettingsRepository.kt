@@ -1,4 +1,4 @@
-package com.egg.feedthechick.data.settings
+package com.egg.jumpadventures.data.settings
 
 interface SettingsRepository {
     fun getMusicVolume(): Int

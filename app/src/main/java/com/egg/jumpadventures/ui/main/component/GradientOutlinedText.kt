@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import com.egg.feedthechick.R
+import android.graphics.Typeface
 
 @Composable
 fun GradientOutlinedText(
@@ -31,11 +31,7 @@ fun GradientOutlinedText(
     val density = LocalDensity.current
     val textSizePx = with(density) { fontSize.toPx() }
 
-    val typeface = remember {
-        androidx.core.content.res.ResourcesCompat.getFont(
-            context, R.font.poppins_extra_bold
-        ) ?: android.graphics.Typeface.DEFAULT_BOLD
-    }
+    val typeface = remember { Typeface.DEFAULT_BOLD }
 
     Canvas(
         modifier = modifier
@@ -87,11 +83,7 @@ fun GradientOutlinedTextShort(
     val textSizePx = with(density) { fontSize.toPx() }
     val padPx = with(density) { horizontalPadding.toPx() }
 
-    val typeface = remember {
-        androidx.core.content.res.ResourcesCompat.getFont(
-            context, R.font.poppins_extra_bold
-        ) ?: android.graphics.Typeface.DEFAULT_BOLD
-    }
+    val typeface = remember { Typeface.DEFAULT_BOLD }
 
     Canvas(
         modifier = modifier

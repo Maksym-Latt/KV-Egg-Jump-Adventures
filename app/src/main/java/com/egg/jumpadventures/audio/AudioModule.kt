@@ -1,4 +1,4 @@
-package com.egg.feedthechick.audio
+package com.egg.jumpadventures.audio
 
 import dagger.Binds
 import dagger.Module

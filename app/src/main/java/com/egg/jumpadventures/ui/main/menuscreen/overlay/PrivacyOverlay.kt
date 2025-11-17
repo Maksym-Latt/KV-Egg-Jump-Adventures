@@ -35,9 +35,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.egg.feedthechick.ui.main.component.GradientOutlinedText
-import com.egg.feedthechick.ui.main.component.OrangePrimaryButton
-import com.egg.feedthechick.ui.main.component.SecondaryBackButton
+import com.egg.jumpadventures.ui.main.component.GradientOutlinedText
+import com.egg.jumpadventures.ui.main.component.OrangePrimaryButton
+import com.egg.jumpadventures.ui.main.component.SecondaryBackButton
 
 @Composable
 fun PrivacyOverlay(
@@ -103,7 +103,7 @@ fun PrivacyOverlay(
                     Column(Modifier.verticalScroll(scroll)) {
                         SectionTitle("What we collect")
                         Paragraph(
-                            "We may store gameplay stats (level, points, magnet upgrades) " +
+                            "We may store gameplay stats (height reached, coins collected, chosen shell) " +
                                     "and basic device data needed for app functionality."
                         )
 

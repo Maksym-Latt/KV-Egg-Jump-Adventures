@@ -1,4 +1,4 @@
-package com.egg.feedthechick.data.settings
+package com.egg.jumpadventures.data.settings
 
 import android.content.SharedPreferences
 import javax.inject.Inject

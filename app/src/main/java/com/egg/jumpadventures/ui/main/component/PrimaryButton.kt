@@ -14,7 +14,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -75,9 +74,7 @@ private fun PrimaryButton(
     // Параметры типографики/паддингов из макетов
     val params: ButtonParams = when (variant) {
         PrimaryVariant.StartGreen -> {
-            val fam = remember {
-                FontFamily(Font(resId = R.font.poppins_extra_bold, weight = FontWeight.ExtraBold))
-            }
+            val fam = remember { FontFamily.SansSerif }
             ButtonParams(
                 family = fam,
                 weight = FontWeight.ExtraBold,
@@ -87,13 +84,7 @@ private fun PrimaryButton(
             )
         }
         PrimaryVariant.Orange -> {
-            val fam = remember {
-                runCatching {
-                    FontFamily(Font(resId = R.font.poppins_extra_bold, weight = FontWeight.ExtraBold))
-                }.getOrElse {
-                    FontFamily(Font(resId = R.font.poppins_extra_bold, weight = FontWeight.ExtraBold))
-                }
-            }
+            val fam = remember { FontFamily.SansSerif }
             ButtonParams(
                 family = fam,
                 weight = FontWeight.Bold,

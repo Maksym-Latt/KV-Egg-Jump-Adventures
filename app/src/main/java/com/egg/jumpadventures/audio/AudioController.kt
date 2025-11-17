@@ -1,4 +1,4 @@
-package com.egg.feedthechick.audio
+package com.egg.jumpadventures.audio
 
 interface AudioController {
     fun playMenuMusic()
