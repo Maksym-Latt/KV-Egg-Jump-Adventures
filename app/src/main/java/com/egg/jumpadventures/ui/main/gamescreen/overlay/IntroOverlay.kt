@@ -39,8 +39,9 @@ fun IntroOverlay(
     val panelShape = RoundedCornerShape(22.dp)
     val panelGrad = Brush.verticalGradient(
         listOf(
-            Color(0xFFFFE6FE),
-            Color(0xFFCC5EFF)
+            Color(0xff78318a),
+            Color(0xffb02d87),
+            Color(0xffd57aa1)
         )
     )
 
@@ -56,7 +57,6 @@ fun IntroOverlay(
                 .widthIn(max = 360.dp)
                 .clip(panelShape)
                 .background(panelGrad)
-                .border(2.dp, Color.White.copy(alpha = 0.45f), panelShape)
                 .padding(horizontal = 20.dp, vertical = 22.dp)
         ) {
             Column(
