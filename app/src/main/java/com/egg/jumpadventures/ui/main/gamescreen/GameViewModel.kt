@@ -1,10 +1,15 @@
 package com.egg.jumpadventures.ui.main.gamescreen
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.egg.jumpadventures.ui.main.menuscreen.model.EggSkin
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.random.Random
 
@@ -27,6 +32,7 @@ private const val TARGET_PER_LEVEL = 50
 class GameViewModel : ViewModel() {
 
     private val random = Random(System.currentTimeMillis())
+    private val _events = MutableSharedFlow<GameEvent>(extraBufferCapacity = 16)
 
     private val _state = MutableStateFlow(
         GameUiState(
@@ -35,6 +41,7 @@ class GameViewModel : ViewModel() {
         )
     )
     val state: StateFlow<GameUiState> = _state
+    val events: SharedFlow<GameEvent> = _events.asSharedFlow()
 
     fun setSkin(skin: EggSkin) {
         _state.update { it.copy(selectedSkin = skin) }
@@ -93,7 +100,11 @@ class GameViewModel : ViewModel() {
     }
 
     fun stopAndShowGameOver() {
+        val wasGameOver = _state.value.isGameOver
         _state.update { it.copy(running = false, isPaused = false, isGameOver = true, hasWon = false) }
+        if (!wasGameOver) {
+            viewModelScope.launch { _events.emit(GameEvent.GameOver) }
+        }
     }
 
     fun retry() {
@@ -144,6 +155,8 @@ class GameViewModel : ViewModel() {
             var running = state.running
             var isGameOver = state.isGameOver
             var hasWon = state.hasWon
+            var coinCollected = false
+            var jumped = false
 
             if (velocityY > 0f) {
                 val landingPlatform = platforms.firstOrNull { platform ->
@@ -154,6 +167,7 @@ class GameViewModel : ViewModel() {
                 if (landingPlatform != null) {
                     velocityY = JUMP_FORCE
                     playerY = landingPlatform.y - 0.08f
+                    jumped = true
                 }
             }
 
@@ -162,6 +176,7 @@ class GameViewModel : ViewModel() {
                 val dy = abs(playerY - coin.y)
                 if (dx < 0.12f && dy < 0.12f) {
                     coins += 1
+                    coinCollected = true
                     coin.copy(x = randomX(), y = respawnPlatformY())
                 } else {
                     coin
@@ -192,11 +207,21 @@ class GameViewModel : ViewModel() {
             if (coins >= state.targetCoins) {
                 running = false
                 hasWon = true
+                viewModelScope.launch { _events.emit(GameEvent.Win) }
             }
 
             if (playerY > PLAYER_FALL_LIMIT && !hasWon) {
                 running = false
                 isGameOver = true
+                viewModelScope.launch { _events.emit(GameEvent.GameOver) }
+            }
+
+            if (coinCollected) {
+                viewModelScope.launch { _events.emit(GameEvent.CoinCollected) }
+            }
+
+            if (jumped) {
+                viewModelScope.launch { _events.emit(GameEvent.Jumped) }
             }
 
             state.copy(
@@ -329,3 +354,10 @@ data class GameResult(
 )
 
 private fun targetForLevel(level: Int): Int = BASE_TARGET + (level - 1) * TARGET_PER_LEVEL
+
+sealed interface GameEvent {
+    data object Jumped : GameEvent
+    data object CoinCollected : GameEvent
+    data object GameOver : GameEvent
+    data object Win : GameEvent
+}

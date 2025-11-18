@@ -43,6 +43,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.egg.jumpadventures.R
+import com.egg.jumpadventures.audio.rememberAudioController
 import com.egg.jumpadventures.ui.main.component.SecondaryIconButton
 import com.egg.jumpadventures.ui.main.gamescreen.overlay.GameOverOverlay
 import com.egg.jumpadventures.ui.main.gamescreen.overlay.GameSettingsOverlay
@@ -59,6 +60,7 @@ fun GameScreen(
     viewModel: GameViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val audio = rememberAudioController()
 
     LaunchedEffect(skin) {
         viewModel.setSkin(skin)
@@ -69,6 +71,17 @@ fun GameScreen(
         while (state.running && !state.isPaused && !state.isGameOver && !state.hasWon) {
             delay(16)
             viewModel.tick()
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                GameEvent.Jumped -> audio.playJump()
+                GameEvent.CoinCollected -> audio.playCoinPickup()
+                GameEvent.GameOver -> audio.playGameLose()
+                GameEvent.Win -> audio.playGameWin()
+            }
         }
     }
 

@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.egg.jumpadventures.R
+import com.egg.jumpadventures.audio.rememberAudioController
 import com.egg.jumpadventures.ui.main.component.GradientOutlinedText
 import com.egg.jumpadventures.ui.main.component.OrangePrimaryButton
 import com.egg.jumpadventures.ui.main.component.PrimaryButton
@@ -64,6 +65,7 @@ fun ShopOverlay(
     onBuy: (EggSkin) -> Unit,
 ) {
     val cardShape = RoundedCornerShape(24.dp)
+    val audio = rememberAudioController()
 
     // фон экрана как на скрине
     val screenBg = Brush.verticalGradient(
@@ -265,6 +267,7 @@ private fun ShopItemCard(
                 else -> {
                     // не хватает монет – показываем диалог
                     showNotEnough = true
+                    audio.playNoMoney()
                 }
             }
         }

@@ -4,6 +4,10 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.SoundPool
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,7 +20,7 @@ class DefaultAudioController @Inject constructor(
 ) : AudioController {
 
     private enum class MusicChannel { MENU, GAME }
-    private enum class SoundEffect {WIN }
+    private enum class SoundEffect { WIN, LOSE, PICKUP, JUMP, NO_MONEY }
 
     private val soundPool: SoundPool = SoundPool.Builder()
         .setMaxStreams(6)
@@ -29,7 +33,11 @@ class DefaultAudioController @Inject constructor(
         .build()
 
     private val effectToName = mapOf(
-        SoundEffect.WIN to "sfx_game_win",
+        SoundEffect.WIN to "sfx_win",
+        SoundEffect.LOSE to "sfx_lose",
+        SoundEffect.PICKUP to "sfx_pickup",
+        SoundEffect.JUMP to "sfx_jump",
+        SoundEffect.NO_MONEY to "sfx_nomoney",
     )
 
     private val effectToResId = effectToName.mapValues { resolveRaw(it.value) }
@@ -45,7 +53,16 @@ class DefaultAudioController @Inject constructor(
 
     private var musicVolume: Float = settingsRepository.getMusicVolume().toVolume()
     private var soundVolume: Float = settingsRepository.getSoundVolume().toVolume()
+    private var vibrationEnabled: Boolean = settingsRepository.isVibrationEnabled()
     private var resumeAfterLifecyclePause: Boolean = false
+
+    private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+        manager?.defaultVibrator
+    } else {
+        @Suppress("DEPRECATION")
+        context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+    }
 
     init {
         soundPool.setOnLoadCompleteListener { pool, sampleId, status ->
@@ -121,8 +138,32 @@ class DefaultAudioController @Inject constructor(
         soundVolume = percent.toVolume()
     }
 
+    override fun setVibrationEnabled(enabled: Boolean) {
+        vibrationEnabled = enabled
+    }
+
+    override fun playGameLose() {
+        playEffect(SoundEffect.LOSE)
+        vibrate(160L)
+    }
+
+    override fun playCoinPickup() {
+        playEffect(SoundEffect.PICKUP)
+        vibrate(25L)
+    }
+
+    override fun playJump() {
+        playEffect(SoundEffect.JUMP)
+    }
+
+    override fun playNoMoney() {
+        playEffect(SoundEffect.NO_MONEY)
+        vibrate(90L)
+    }
+
     override fun playGameWin() {
         playEffect(SoundEffect.WIN)
+        vibrate(200L)
     }
 
 
@@ -202,4 +243,15 @@ class DefaultAudioController @Inject constructor(
     }
 
     private fun Int.toVolume(): Float = (this.coerceIn(0, 100) / 100f).coerceIn(0f, 1f)
+
+    private fun vibrate(durationMs: Long) {
+        if (!vibrationEnabled) return
+        val vib = vibrator ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vib.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vib.vibrate(durationMs)
+        }
+    }
 }
