@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import android.graphics.Typeface
+import androidx.core.content.res.ResourcesCompat
+import com.egg.jumpadventures.R
 
 @Composable
 fun GradientOutlinedText(
@@ -83,7 +85,10 @@ fun GradientOutlinedTextShort(
     val textSizePx = with(density) { fontSize.toPx() }
     val padPx = with(density) { horizontalPadding.toPx() }
 
-    val typeface = remember { Typeface.DEFAULT_BOLD }
+
+    val typeface = remember {
+        ResourcesCompat.getFont(context, R.font.baloo_2_extra_bold) ?: Typeface.DEFAULT_BOLD
+    }
 
     Canvas(
         modifier = modifier

@@ -17,6 +17,10 @@ private const val PLAYER_FALL_LIMIT = 1.05f
 private const val HEIGHT_PER_UNIT = 240
 private const val PLATFORM_HIT_X = 0.18f
 private const val PLATFORM_HIT_Y = 0.06f
+private const val MIN_PLATFORM_VERTICAL_GAP = 0.08f
+private const val MAX_PLATFORM_VERTICAL_GAP = 0.18f
+private const val MIN_PLATFORM_HORIZONTAL_GAP = 0.22f
+private const val PLATFORM_RESPAWN_ATTEMPTS = 8
 
 class GameViewModel : ViewModel() {
 
@@ -143,9 +147,14 @@ class GameViewModel : ViewModel() {
                 height += (shift * HEIGHT_PER_UNIT).toInt()
             }
 
-            platforms = platforms.map { platform ->
-                if (platform.y > 1.05f) platform.copy(x = randomX(), y = respawnPlatformY()) else platform
+            val updatedPlatforms = platforms.toMutableList()
+            for (index in updatedPlatforms.indices) {
+                if (updatedPlatforms[index].y > 1.05f) {
+                    val withoutCurrent = updatedPlatforms.filterIndexed { i, _ -> i != index }
+                    updatedPlatforms[index] = respawnPlatform(withoutCurrent, updatedPlatforms[index].id)
+                }
             }
+            platforms = updatedPlatforms
 
             coinsOnField = coinsOnField.map { coin ->
                 if (coin.y > 1.05f) coin.copy(x = randomX(), y = respawnPlatformY()) else coin
@@ -185,18 +194,54 @@ class GameViewModel : ViewModel() {
     }
 
     private fun seedPlatforms(): List<PlatformState> {
-        val spacing = 0.1f
-        return List(PLATFORM_COUNT) { index ->
-            val yPos = 0.2f + spacing * index + random.nextFloat() * 0.04f
-            PlatformState(id = index, x = randomX(), y = yPos.coerceAtMost(0.95f))
+        val platforms = mutableListOf<PlatformState>()
+        var currentY = 0.86f
+
+        repeat(PLATFORM_COUNT) { index ->
+            platforms += createPlatform(
+                id = index,
+                targetY = currentY,
+                existing = platforms
+            )
+            currentY -= randomPlatformGap()
         }
+
+        return platforms
     }
 
     private fun seedCoins(): List<CoinState> = List(COIN_COUNT) { index ->
         CoinState(id = index, x = randomX(), y = random.nextFloat())
     }
 
+    private fun randomPlatformGap(): Float =
+        MIN_PLATFORM_VERTICAL_GAP + random.nextFloat() * (MAX_PLATFORM_VERTICAL_GAP - MIN_PLATFORM_VERTICAL_GAP)
+
     private fun randomX(): Float = random.nextFloat().coerceIn(0.05f, 0.95f)
+
+    private fun createPlatform(id: Int, targetY: Float, existing: List<PlatformState>): PlatformState {
+        val clampedY = targetY.coerceAtMost(0.95f)
+        val x = findNonOverlappingX(existing, clampedY)
+        return PlatformState(id = id, x = x, y = clampedY)
+    }
+
+    private fun respawnPlatform(platforms: List<PlatformState>, platformId: Int): PlatformState {
+        val highestY = platforms.minOfOrNull { it.y } ?: 0.86f
+        val newY = highestY - randomPlatformGap()
+        return createPlatform(id = platformId, targetY = newY, existing = platforms)
+    }
+
+    private fun findNonOverlappingX(existing: List<PlatformState>, y: Float): Float {
+        repeat(PLATFORM_RESPAWN_ATTEMPTS) {
+            val candidate = randomX()
+            val overlaps = existing.any { platform ->
+                val closeX = wrapDelta(candidate, platform.x) < MIN_PLATFORM_HORIZONTAL_GAP
+                val closeY = abs(y - platform.y) < MIN_PLATFORM_VERTICAL_GAP
+                closeX && closeY
+            }
+            if (!overlaps) return candidate
+        }
+        return randomX()
+    }
 
     private fun respawnPlatformY(): Float = -random.nextFloat() * 0.25f
 }

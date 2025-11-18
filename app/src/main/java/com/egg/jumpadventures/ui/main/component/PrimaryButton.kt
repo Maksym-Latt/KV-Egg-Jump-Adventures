@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.egg.jumpadventures.ui.theme.BalooFontFamily
 
 // ---------- Internal ----------
 @Composable
@@ -87,7 +88,7 @@ public fun PrimaryButton(
     val params: ButtonParams = when (variant) {
         // зелёная капсула (SELECTED)
         PrimaryVariant.StartGreen -> ButtonParams(
-            family = FontFamily.SansSerif,
+            family = BalooFontFamily,
             weight = FontWeight.ExtraBold,
             size = 16.sp,
             line = 20.sp,
@@ -112,7 +113,7 @@ public fun PrimaryButton(
 
         // большая PLAY
         PrimaryVariant.Orange -> ButtonParams(
-            family = FontFamily.SansSerif,
+            family = BalooFontFamily,
             weight = FontWeight.ExtraBold,
             size = 22.sp,
             line = 26.sp,
@@ -137,7 +138,7 @@ public fun PrimaryButton(
 
         // маленькая BUY
         PrimaryVariant.OrangeSmall -> ButtonParams(
-            family = FontFamily.SansSerif,
+            family = BalooFontFamily,
             weight = FontWeight.ExtraBold,
             size = 14.sp,
             line = 18.sp,
@@ -162,7 +163,7 @@ public fun PrimaryButton(
 
         // широкая BACK (персиковая с коричневым текстом)
         PrimaryVariant.PeachBack -> ButtonParams(
-            family = FontFamily.SansSerif,
+            family = BalooFontFamily,
             weight = FontWeight.ExtraBold,
             size = 22.sp,
             line = 26.sp,
