@@ -65,7 +65,6 @@ fun ShopOverlay(
     onBuy: (EggSkin) -> Unit,
 ) {
     val cardShape = RoundedCornerShape(24.dp)
-    val audio = rememberAudioController()
 
     // фон экрана как на скрине
     val screenBg = Brush.verticalGradient(
@@ -267,7 +266,6 @@ private fun ShopItemCard(
                 else -> {
                     // не хватает монет – показываем диалог
                     showNotEnough = true
-                    audio.playNoMoney()
                 }
             }
         }
