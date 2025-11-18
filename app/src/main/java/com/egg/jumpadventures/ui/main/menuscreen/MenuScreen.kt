@@ -144,7 +144,7 @@ fun MenuScreen(
                 if (state.lastHeight > 0) {
                     Spacer(modifier = Modifier.height(18.dp))
                     Text(
-                        text = "Last jump: ${state.lastHeight} m",
+                        text = "Record: ${state.lastHeight} m",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = Color(0xFF7B4A2D),
                             fontWeight = FontWeight.SemiBold

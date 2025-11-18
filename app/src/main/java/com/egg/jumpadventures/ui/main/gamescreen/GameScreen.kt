@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -57,7 +58,7 @@ import kotlinx.coroutines.delay
 fun GameScreen(
     skin: EggSkin,
     onExitToMenu: (GameResult) -> Unit,
-    viewModel: GameViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    viewModel: GameViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val audio = rememberAudioController()

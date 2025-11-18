@@ -480,7 +480,8 @@ private fun PreviewWinOverlay() {
             height = 0,
             level = 3,
             targetCoins = 200,
-            hasWon = true
+            hasWon = true,
+            finished = true
         ),
         onNextLevel = {},
         onHome = {}
@@ -500,7 +501,8 @@ private fun PreviewGameOverOverlay() {
             height = 155,
             level = 3,
             targetCoins = 300,
-            hasWon = false
+            hasWon = false,
+            finished = true
         ),
         targetCoins = 300,
         onRetry = {},

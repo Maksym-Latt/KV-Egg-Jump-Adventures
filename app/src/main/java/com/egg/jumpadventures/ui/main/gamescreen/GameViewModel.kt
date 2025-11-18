@@ -2,7 +2,9 @@ package com.egg.jumpadventures.ui.main.gamescreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.egg.jumpadventures.data.progress.PlayerProgressRepository
 import com.egg.jumpadventures.ui.main.menuscreen.model.EggSkin
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -12,6 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.random.Random
+import javax.inject.Inject
 
 private const val PLATFORM_COUNT = 8
 private const val COIN_COUNT = 6
@@ -29,13 +32,20 @@ private const val PLATFORM_RESPAWN_ATTEMPTS = 8
 private const val BASE_TARGET = 100
 private const val TARGET_PER_LEVEL = 50
 
-class GameViewModel : ViewModel() {
+@HiltViewModel
+class GameViewModel @Inject constructor(
+    private val progressRepository: PlayerProgressRepository,
+) : ViewModel() {
 
     private val random = Random(System.currentTimeMillis())
     private val _events = MutableSharedFlow<GameEvent>(extraBufferCapacity = 16)
+    private var resultRecorded = false
 
     private val _state = MutableStateFlow(
         GameUiState(
+            level = progressRepository.progress.value.level,
+            targetCoins = targetForLevel(progressRepository.progress.value.level),
+            selectedSkin = progressRepository.progress.value.selectedSkin,
             platforms = seedPlatforms(),
             coinsOnField = seedCoins(),
         )
@@ -65,6 +75,7 @@ class GameViewModel : ViewModel() {
                 targetCoins = targetForLevel(it.level)
             )
         }
+        resultRecorded = false
     }
 
     fun startRun() {
@@ -85,6 +96,7 @@ class GameViewModel : ViewModel() {
                 targetCoins = targetForLevel(it.level)
             )
         }
+        resultRecorded = false
     }
 
     fun pause() {
@@ -102,6 +114,7 @@ class GameViewModel : ViewModel() {
     fun stopAndShowGameOver() {
         val wasGameOver = _state.value.isGameOver
         _state.update { it.copy(running = false, isPaused = false, isGameOver = true, hasWon = false) }
+        recordRunIfNeeded(hasWon = false)
         if (!wasGameOver) {
             viewModelScope.launch { _events.emit(GameEvent.GameOver) }
         }
@@ -131,6 +144,8 @@ class GameViewModel : ViewModel() {
                 verticalVelocity = JUMP_FORCE
             )
         }
+        progressRepository.saveLevel(_state.value.level)
+        resultRecorded = false
     }
 
     fun movePlayer(delta: Float) {
@@ -157,7 +172,7 @@ class GameViewModel : ViewModel() {
             var hasWon = state.hasWon
             var coinCollected = false
             var jumped = false
-
+            
             if (velocityY > 0f) {
                 val landingPlatform = platforms.firstOrNull { platform ->
                     val closeX = wrapDelta(playerX, platform.x) < PLATFORM_HIT_X
@@ -237,6 +252,11 @@ class GameViewModel : ViewModel() {
                 hasWon = hasWon
             )
         }
+
+        val current = _state.value
+        if (!resultRecorded && (current.hasWon || current.isGameOver)) {
+            recordRunIfNeeded(hasWon = current.hasWon)
+        }
     }
 
     fun currentResult(): GameResult = _state.value.let {
@@ -245,8 +265,20 @@ class GameViewModel : ViewModel() {
             coins = it.coins,
             level = it.level,
             targetCoins = it.targetCoins,
-            hasWon = it.hasWon
+            hasWon = it.hasWon,
+            finished = it.isGameOver || it.hasWon
         )
+    }
+
+    private fun recordRunIfNeeded(hasWon: Boolean) {
+        if (resultRecorded) return
+        val snapshot = _state.value
+        if (!snapshot.isGameOver && !snapshot.hasWon) return
+        resultRecorded = true
+        progressRepository.recordFinishedRun(snapshot.coins, snapshot.height, snapshot.level)
+        if (hasWon) {
+            progressRepository.saveLevel(snapshot.level)
+        }
     }
 
     private fun wrapPosition(value: Float): Float {
@@ -351,6 +383,7 @@ data class GameResult(
     val level: Int,
     val targetCoins: Int,
     val hasWon: Boolean,
+    val finished: Boolean,
 )
 
 private fun targetForLevel(level: Int): Int = BASE_TARGET + (level - 1) * TARGET_PER_LEVEL
