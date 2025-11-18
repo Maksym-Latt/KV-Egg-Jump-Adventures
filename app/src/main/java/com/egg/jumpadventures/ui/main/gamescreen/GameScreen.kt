@@ -47,6 +47,7 @@ import com.egg.jumpadventures.ui.main.component.SecondaryIconButton
 import com.egg.jumpadventures.ui.main.gamescreen.overlay.GameOverOverlay
 import com.egg.jumpadventures.ui.main.gamescreen.overlay.GameSettingsOverlay
 import com.egg.jumpadventures.ui.main.gamescreen.overlay.IntroOverlay
+import com.egg.jumpadventures.ui.main.gamescreen.overlay.WinOverlay
 import com.egg.jumpadventures.ui.main.menuscreen.model.EggSkin
 import kotlinx.coroutines.delay
 
@@ -64,8 +65,8 @@ fun GameScreen(
         viewModel.showIntroOnEnter()
     }
 
-    LaunchedEffect(state.running, state.isPaused, state.isGameOver) {
-        while (state.running && !state.isPaused && !state.isGameOver) {
+    LaunchedEffect(state.running, state.isPaused, state.isGameOver, state.hasWon) {
+        while (state.running && !state.isPaused && !state.isGameOver && !state.hasWon) {
             delay(16)
             viewModel.tick()
         }
@@ -114,7 +115,11 @@ fun GameScreen(
         )
 
         if (state.showIntro) {
-            IntroOverlay(onStart = viewModel::startRun)
+            IntroOverlay(
+                level = state.level,
+                targetCoins = state.targetCoins,
+                onStart = viewModel::startRun
+            )
         }
 
         if (state.isPaused && !state.isGameOver) {
@@ -125,9 +130,16 @@ fun GameScreen(
             )
         }
 
-        if (state.isGameOver) {
+        if (state.hasWon) {
+            WinOverlay(
+                result = viewModel.currentResult(),
+                onNextLevel = viewModel::advanceToNextLevel,
+                onHome = { onExitToMenu(viewModel.currentResult()) }
+            )
+        } else if (state.isGameOver) {
             GameOverOverlay(
                 result = viewModel.currentResult(),
+                targetCoins = state.targetCoins,
                 onRetry = { viewModel.retry() },
                 onHome = { onExitToMenu(viewModel.currentResult()) }
             )

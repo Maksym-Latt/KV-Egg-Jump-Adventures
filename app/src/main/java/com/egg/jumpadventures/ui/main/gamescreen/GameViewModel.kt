@@ -21,6 +21,8 @@ private const val MIN_PLATFORM_VERTICAL_GAP = 0.08f
 private const val MAX_PLATFORM_VERTICAL_GAP = 0.18f
 private const val MIN_PLATFORM_HORIZONTAL_GAP = 0.22f
 private const val PLATFORM_RESPAWN_ATTEMPTS = 8
+private const val BASE_TARGET = 100
+private const val TARGET_PER_LEVEL = 50
 
 class GameViewModel : ViewModel() {
 
@@ -45,13 +47,15 @@ class GameViewModel : ViewModel() {
                 running = false,
                 isPaused = false,
                 isGameOver = false,
+                hasWon = false,
                 height = 0,
                 coins = 0,
                 platforms = seedPlatforms(),
                 coinsOnField = seedCoins(),
                 playerX = 0.5f,
                 playerY = 0.8f,
-                verticalVelocity = JUMP_FORCE
+                verticalVelocity = JUMP_FORCE,
+                targetCoins = targetForLevel(it.level)
             )
         }
     }
@@ -62,7 +66,51 @@ class GameViewModel : ViewModel() {
                 running = true,
                 isPaused = false,
                 isGameOver = false,
+                hasWon = false,
                 showIntro = false,
+                height = 0,
+                coins = 0,
+                platforms = seedPlatforms(),
+                coinsOnField = seedCoins(),
+                playerX = 0.5f,
+                playerY = 0.8f,
+                verticalVelocity = JUMP_FORCE,
+                targetCoins = targetForLevel(it.level)
+            )
+        }
+    }
+
+    fun pause() {
+        _state.update { state ->
+            if (!state.running || state.isGameOver || state.hasWon) state else state.copy(isPaused = true)
+        }
+    }
+
+    fun resume() {
+        _state.update { state ->
+            if (state.isGameOver || state.hasWon) state else state.copy(isPaused = false, running = true)
+        }
+    }
+
+    fun stopAndShowGameOver() {
+        _state.update { it.copy(running = false, isPaused = false, isGameOver = true, hasWon = false) }
+    }
+
+    fun retry() {
+        showIntroOnEnter()
+    }
+
+    fun advanceToNextLevel() {
+        _state.update { current ->
+            val nextLevel = current.level + 1
+            current.copy(
+                level = nextLevel,
+                targetCoins = targetForLevel(nextLevel),
+                showIntro = true,
+                running = false,
+                isPaused = false,
+                isGameOver = false,
+                hasWon = false,
                 height = 0,
                 coins = 0,
                 platforms = seedPlatforms(),
@@ -72,26 +120,6 @@ class GameViewModel : ViewModel() {
                 verticalVelocity = JUMP_FORCE
             )
         }
-    }
-
-    fun pause() {
-        _state.update { state ->
-            if (!state.running || state.isGameOver) state else state.copy(isPaused = true)
-        }
-    }
-
-    fun resume() {
-        _state.update { state ->
-            if (state.isGameOver) state else state.copy(isPaused = false, running = true)
-        }
-    }
-
-    fun stopAndShowGameOver() {
-        _state.update { it.copy(running = false, isPaused = false, isGameOver = true) }
-    }
-
-    fun retry() {
-        showIntroOnEnter()
     }
 
     fun movePlayer(delta: Float) {
@@ -104,7 +132,7 @@ class GameViewModel : ViewModel() {
 
     fun tick() {
         _state.update { state ->
-            if (!state.running || state.isPaused || state.isGameOver) return@update state
+            if (!state.running || state.isPaused || state.isGameOver || state.hasWon) return@update state
 
             var playerX = wrapPosition(state.playerX)
             var playerY = state.playerY + state.verticalVelocity
@@ -115,6 +143,7 @@ class GameViewModel : ViewModel() {
             var height = state.height
             var running = state.running
             var isGameOver = state.isGameOver
+            var hasWon = state.hasWon
 
             if (velocityY > 0f) {
                 val landingPlatform = platforms.firstOrNull { platform ->
@@ -160,7 +189,12 @@ class GameViewModel : ViewModel() {
                 if (coin.y > 1.05f) coin.copy(x = randomX(), y = respawnPlatformY()) else coin
             }
 
-            if (playerY > PLAYER_FALL_LIMIT) {
+            if (coins >= state.targetCoins) {
+                running = false
+                hasWon = true
+            }
+
+            if (playerY > PLAYER_FALL_LIMIT && !hasWon) {
                 running = false
                 isGameOver = true
             }
@@ -174,12 +208,21 @@ class GameViewModel : ViewModel() {
                 playerY = playerY,
                 verticalVelocity = velocityY,
                 running = running,
-                isGameOver = isGameOver
+                isGameOver = isGameOver,
+                hasWon = hasWon
             )
         }
     }
 
-    fun currentResult(): GameResult = _state.value.let { GameResult(height = it.height, coins = it.coins) }
+    fun currentResult(): GameResult = _state.value.let {
+        GameResult(
+            height = it.height,
+            coins = it.coins,
+            level = it.level,
+            targetCoins = it.targetCoins,
+            hasWon = it.hasWon
+        )
+    }
 
     private fun wrapPosition(value: Float): Float {
         var wrapped = value
@@ -252,8 +295,11 @@ data class GameUiState(
     val isPaused: Boolean = false,
     val showIntro: Boolean = true,
     val isGameOver: Boolean = false,
+    val hasWon: Boolean = false,
     val height: Int = 0,
     val coins: Int = 0,
+    val level: Int = 1,
+    val targetCoins: Int = targetForLevel(level),
     val selectedSkin: EggSkin = EggSkin.Classic,
     val platforms: List<PlatformState> = emptyList(),
     val coinsOnField: List<CoinState> = emptyList(),
@@ -277,4 +323,9 @@ data class CoinState(
 data class GameResult(
     val height: Int,
     val coins: Int,
+    val level: Int,
+    val targetCoins: Int,
+    val hasWon: Boolean,
 )
+
+private fun targetForLevel(level: Int): Int = BASE_TARGET + (level - 1) * TARGET_PER_LEVEL
