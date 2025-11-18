@@ -32,6 +32,8 @@ import com.egg.jumpadventures.ui.main.component.StartPrimaryButton
 
 @Composable
 fun IntroOverlay(
+    level: Int,
+    targetCoins: Int,
     onStart: () -> Unit,
 ) {
     val panelShape = RoundedCornerShape(22.dp)
@@ -78,7 +80,7 @@ fun IntroOverlay(
                 )
 
                 Text(
-                    text = "Bounce between clouds, collect coins\nand don’t let the egg fall down!",
+                    text = "Level $level goal: collect $targetCoins coins.\nBounce between clouds and don't fall!",
                     color = Color(0xFFFFF4E7),
                     fontSize = 14.sp,
                     lineHeight = 18.sp,
