@@ -1,13 +1,17 @@
 package com.egg.jumpadventures.ui.main.gamescreen.overlay
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -17,9 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.egg.jumpadventures.R
 import com.egg.jumpadventures.ui.main.component.GradientOutlinedText
 import com.egg.jumpadventures.ui.main.component.StartPrimaryButton
 
@@ -27,8 +34,13 @@ import com.egg.jumpadventures.ui.main.component.StartPrimaryButton
 fun IntroOverlay(
     onStart: () -> Unit,
 ) {
-    val panelGrad = Brush.verticalGradient(listOf(Color(0xFFFFE6FE), Color(0xFFCC5EFF)))
-    val cardShape = RoundedCornerShape(26.dp)
+    val panelShape = RoundedCornerShape(22.dp)
+    val panelGrad = Brush.verticalGradient(
+        listOf(
+            Color(0xFFFFE6FE),
+            Color(0xFFCC5EFF)
+        )
+    )
 
     Box(
         modifier = Modifier
@@ -38,11 +50,12 @@ fun IntroOverlay(
     ) {
         Box(
             modifier = Modifier
-                .width(320.dp)
-                .wrapContentHeight()
-                .clip(cardShape)
+                .fillMaxWidth(0.85f)
+                .widthIn(max = 360.dp)
+                .clip(panelShape)
                 .background(panelGrad)
-                .padding(vertical = 22.dp, horizontal = 18.dp)
+                .border(2.dp, Color.White.copy(alpha = 0.45f), panelShape)
+                .padding(horizontal = 20.dp, vertical = 22.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -50,20 +63,34 @@ fun IntroOverlay(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 GradientOutlinedText(
-                    text = "Jump up!",
-                    fontSize = 34.sp,
+                    text = "READY TO JUMP?",
+                    fontSize = 26.sp,
                     gradientColors = listOf(Color.White, Color.White)
                 )
-                Text(
-                    text = "Bounce between soft platforms, grab sunrise coins, and keep the egg from falling.",
-                    color = Color(0xFF7B4A2D),
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 20.sp
+
+                Image(
+                    painter = painterResource(id = R.drawable.egg_2),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(92.dp)
+                        .padding(top = 2.dp),
+                    contentScale = ContentScale.Fit
                 )
+
+                Text(
+                    text = "Bounce between clouds, collect coins\nand don’t let the egg fall down!",
+                    color = Color(0xFFFFF4E7),
+                    fontSize = 14.sp,
+                    lineHeight = 18.sp,
+                    textAlign = TextAlign.Center
+                )
+
                 StartPrimaryButton(
-                    text = "Play",
-                    onClick = onStart
+                    text = "PLAY",
+                    onClick = onStart,
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(top = 4.dp)
                 )
             }
         }

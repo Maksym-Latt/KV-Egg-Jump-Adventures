@@ -32,7 +32,7 @@
             android:resizeableActivity="false"
             android:screenOrientation="portrait"
             android:supportsPictureInPicture="false"
-            android:theme="@style/Theme.ChickenGalaxy"></activity>
+            android:theme="@style/Theme.ChickenPop"></activity>
     </application>
 
 </manifest>

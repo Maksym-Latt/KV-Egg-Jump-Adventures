@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -15,7 +16,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -26,6 +29,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -33,7 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.consume
+import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -45,6 +50,7 @@ import com.egg.jumpadventures.ui.main.gamescreen.overlay.IntroOverlay
 import com.egg.jumpadventures.ui.main.menuscreen.model.EggSkin
 import kotlinx.coroutines.delay
 
+// ======================= 🐣 ЭКРАН ИГРЫ =======================
 @Composable
 fun GameScreen(
     skin: EggSkin,
@@ -88,13 +94,18 @@ fun GameScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFFFFF2FF), Color(0xFFFFE3D2), Color(0xFFFFD8C2))
-                )
-            )
     ) {
-        GameField(state = state, onDrag = viewModel::movePlayer)
+        Image(
+            painter = painterResource(id = R.drawable.bg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        GameField(
+            state = state,
+            onDrag = viewModel::movePlayer
+        )
 
         GameHud(
             coins = state.coins,
@@ -130,62 +141,97 @@ private fun GameHud(
     height: Int,
     onPause: () -> Unit,
 ) {
-    Row(
+    val cardShape = RoundedCornerShape(24.dp)
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 20.dp),
-        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(start = 16.dp, end = 16.dp, top = 18.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = R.drawable.coin),
-                contentDescription = null,
-                modifier = Modifier.size(28.dp)
-            )
-            Text(
-                text = "x$coins",
-                color = Color(0xFF7B4A2D),
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                modifier = Modifier.padding(start = 6.dp)
-            )
-        }
-
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = "${height}m",
-                color = Color(0xFF7B4A2D),
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 20.sp
-            )
-            Text(
-                text = "Height",
-                color = Color(0xFF9B6B4A),
-                fontSize = 12.sp
-            )
-        }
-
-        SecondaryIconButton(
-            onClick = onPause,
-            modifier = Modifier.size(52.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .shadow(
+                    elevation = 10.dp,
+                    shape = cardShape,
+                    clip = false,
+                    ambientColor = Color(0x33000000),
+                    spotColor = Color(0x33000000)
+                )
+                .clip(cardShape)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFFE9D7FF),
+                            Color(0xFFFFE6CF)
+                        )
+                    )
+                )
+                .padding(horizontal = 18.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Pause,
-                contentDescription = "Pause",
-                tint = Color.White,
-                modifier = Modifier.fillMaxSize(0.72f)
-            )
+            // --- монеты ---
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.coin),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    text = "x$coins",
+                    color = Color(0xFF7B4A2D),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(start = 6.dp)
+                )
+            }
+
+            // --- высота + стрелка вверх ---
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "${height}m",
+                    color = Color(0xFF7B4A2D),
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 18.sp
+                )
+                Icon(
+                    imageVector = Icons.Default.ArrowUpward,
+                    contentDescription = null,
+                    tint = Color(0xFF7B4A2D),
+                    modifier = Modifier
+                        .padding(start = 2.dp)
+                        .size(18.dp)
+                )
+            }
+
+            // --- кнопка паузы в круге ---
+            SecondaryIconButton(
+                onClick = onPause,
+                modifier = Modifier.size(46.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Pause,
+                    contentDescription = "Pause",
+                    tint = Color(0xFFFF9154),
+                    modifier = Modifier.fillMaxSize(0.7f)
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun GameField(state: GameUiState, onDrag: (Float) -> Unit) {
+    val platformWidth = 140.dp
+    val platformHeight = 36.dp
+    val playerSize = 40.dp
+
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 72.dp, bottom = 24.dp)
+            .padding(top = 96.dp, bottom = 24.dp)
             .pointerInput(state.running, state.isPaused) {
                 detectDragGestures { change, dragAmount ->
                     val widthPx = size.width.toFloat().coerceAtLeast(1f)
@@ -197,6 +243,7 @@ private fun GameField(state: GameUiState, onDrag: (Float) -> Unit) {
         val width = maxWidth
         val height = maxHeight
 
+        // --- платформы ---
         state.platforms.forEach { platform ->
             val x = width * platform.x
             val y = height * platform.y
@@ -204,11 +251,12 @@ private fun GameField(state: GameUiState, onDrag: (Float) -> Unit) {
                 painter = painterResource(id = R.drawable.platform),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(width = 120.dp, height = 24.dp)
-                    .offset(x = x - 60.dp, y = y)
+                    .size(width = platformWidth, height = platformHeight)
+                    .offset(x = x - platformWidth / 2, y = y)
             )
         }
 
+        // --- монеты ---
         state.coinsOnField.forEach { coin ->
             val x = width * coin.x
             val y = height * coin.y
@@ -216,20 +264,23 @@ private fun GameField(state: GameUiState, onDrag: (Float) -> Unit) {
                 painter = painterResource(id = R.drawable.coin),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(28.dp)
-                    .offset(x = x - 14.dp, y = y)
+                    .size(43.dp)
+                    .offset(x = x - 13.dp, y = y)
             )
         }
 
+        // --- игрок (курочка) ---
         val playerY = height * state.playerY
         val playerX = width * state.playerX
         Image(
             painter = painterResource(id = state.selectedSkin.playerSprite),
             contentDescription = null,
             modifier = Modifier
-                .width(96.dp)
-                .height(96.dp)
-                .offset(x = playerX - 48.dp, y = playerY - 48.dp)
+                .size(playerSize)
+                .offset(
+                    x = playerX - playerSize / 2,
+                    y = playerY - playerSize / 2
+                )
         )
     }
 }

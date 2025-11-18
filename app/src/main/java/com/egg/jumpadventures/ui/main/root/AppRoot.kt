@@ -20,7 +20,6 @@ import com.egg.jumpadventures.ui.main.gamescreen.GameScreen
 import com.egg.jumpadventures.ui.main.gamescreen.GameResult
 import com.egg.jumpadventures.ui.main.menuscreen.MainViewModel
 import com.egg.jumpadventures.ui.main.menuscreen.MenuScreen
-import com.egg.jumpadventures.ui.main.menuscreen.overlay.PrivacyOverlay
 import com.egg.jumpadventures.ui.main.menuscreen.overlay.SettingsOverlay
 import com.egg.jumpadventures.ui.main.menuscreen.overlay.ShopOverlay
 
@@ -73,21 +72,12 @@ fun AppRoot(
                             },
                             onOpenSettings = { showMenuSettings = true },
                             onOpenShop = { showShop = true },
-                            onOpenPrivacy = { showMenuPrivacy = true }
                         )
 
                         if (showMenuSettings) {
                             SettingsOverlay(
                                 onClose = { showMenuSettings = false },
-                                onPrivacy = {
-                                    showMenuSettings = false
-                                    showMenuPrivacy = true
-                                }
                             )
-                        }
-
-                        if (showMenuPrivacy) {
-                            PrivacyOverlay(onClose = { showMenuPrivacy = false })
                         }
 
                         if (showShop) {

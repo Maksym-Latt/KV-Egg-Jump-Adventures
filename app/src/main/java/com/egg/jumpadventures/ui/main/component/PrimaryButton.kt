@@ -1,11 +1,18 @@
 package com.egg.jumpadventures.ui.main.component
 
+import android.R.attr.scaleX
+import android.R.attr.scaleY
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
@@ -14,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -21,7 +29,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// ---------- Public API ----------
+// ---------- Internal ----------
 @Composable
 fun StartPrimaryButton(
     text: String = "START",
@@ -46,87 +54,194 @@ fun OrangePrimaryButton(
     variant = PrimaryVariant.Orange
 )
 
-// ---------- Internal ----------
-private enum class PrimaryVariant { StartGreen, Orange }
+// ---------- Варианты внешнего вида ----------
+
+public enum class PrimaryVariant {
+    StartGreen,     // зелёная "SELECTED"
+    Orange,         // большая PLAY
+    OrangeSmall,    // маленькая BUY
+    PeachBack       // широкая BACK
+}
+
+// ---------- Основная кнопка ----------
 
 @Composable
-private fun PrimaryButton(
+public fun PrimaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     variant: PrimaryVariant
 ) {
-    val shape = RoundedCornerShape(100.dp)
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
 
-    // Градиенты из макета
-    val gradient = when (variant) {
-        PrimaryVariant.StartGreen ->
-            if (!pressed) Brush.verticalGradient(0f to Color(0xFFA7FF4A), 0.89f to Color(0xFF156D00))
-            else          Brush.verticalGradient(0f to Color(0xFF99B978), 0.89f to Color(0xFF0C3F00))
-
-        PrimaryVariant.Orange ->
-            if (!pressed) Brush.verticalGradient(0f to Color(0xFFFFE3A1), 1f to Color(0xFFF56B00))
-            else          Brush.verticalGradient(0f to Color(0xFFFFC847), 1f to Color(0xFFAA4A00))
-    }
-
-    // Параметры типографики/паддингов из макетов
-    val params: ButtonParams = when (variant) {
-        PrimaryVariant.StartGreen -> {
-            val fam = remember { FontFamily.SansSerif }
-            ButtonParams(
-                family = fam,
-                weight = FontWeight.ExtraBold,
-                size = 36.sp,
-                line = 44.sp,
-                padH = 44.dp
-            )
-        }
-        PrimaryVariant.Orange -> {
-            val fam = remember { FontFamily.SansSerif }
-            ButtonParams(
-                family = fam,
-                weight = FontWeight.Bold,
-                size = 24.sp,
-                line = 32.sp,
-                padH = 24.dp
-            )
-        }
-    }
-
-    val baseText = Color(0xFFF5F5F5)
-    val pressedText = Color(
-        red = (baseText.red * 0.85f).coerceIn(0f, 1f),
-        green = (baseText.green * 0.85f).coerceIn(0f, 1f),
-        blue = (baseText.blue * 0.85f).coerceIn(0f, 1f),
-        alpha = 1f
+    // маленький scale при нажатии
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.97f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "primary_button_scale"
     )
-    val textColor = if (pressed) pressedText else baseText
+
+    // ---------- Параметры под каждый вариант ----------
+
+    val params: ButtonParams = when (variant) {
+        // зелёная капсула (SELECTED)
+        PrimaryVariant.StartGreen -> ButtonParams(
+            family = FontFamily.SansSerif,
+            weight = FontWeight.ExtraBold,
+            size = 16.sp,
+            line = 20.sp,
+            padH = 22.dp,
+            minHeight = 40.dp,
+            cornerRadius = 20.dp,
+            bgIdle = Brush.horizontalGradient(
+                listOf(
+                    Color(0xFF9CF56A),
+                    Color(0xFF2EBB55)
+                )
+            ),
+            bgPressed = Brush.horizontalGradient(
+                listOf(
+                    Color(0xFF7CC34F),
+                    Color(0xFF228B3E)
+                )
+            ),
+            borderColor = Color(0xFF1F7B38),
+            textColor = Color.White
+        )
+
+        // большая PLAY
+        PrimaryVariant.Orange -> ButtonParams(
+            family = FontFamily.SansSerif,
+            weight = FontWeight.ExtraBold,
+            size = 22.sp,
+            line = 26.sp,
+            padH = 40.dp,
+            minHeight = 56.dp,
+            cornerRadius = 22.dp,
+            bgIdle = Brush.horizontalGradient(
+                listOf(
+                    Color(0xFFFFE0B8),
+                    Color(0xFFFFB15C)
+                )
+            ),
+            bgPressed = Brush.horizontalGradient(
+                listOf(
+                    Color(0xFFFCC47E),
+                    Color(0xFFE48C33)
+                )
+            ),
+            borderColor = Color(0xFFF0933B),
+            textColor = Color.White
+        )
+
+        // маленькая BUY
+        PrimaryVariant.OrangeSmall -> ButtonParams(
+            family = FontFamily.SansSerif,
+            weight = FontWeight.ExtraBold,
+            size = 14.sp,
+            line = 18.sp,
+            padH = 20.dp,
+            minHeight = 32.dp,
+            cornerRadius = 18.dp,
+            bgIdle = Brush.horizontalGradient(
+                listOf(
+                    Color(0xFFFFE0B8),
+                    Color(0xFFFFB15C)
+                )
+            ),
+            bgPressed = Brush.horizontalGradient(
+                listOf(
+                    Color(0xFFFCC47E),
+                    Color(0xFFE48C33)
+                )
+            ),
+            borderColor = Color(0xFFF0933B),
+            textColor = Color.White
+        )
+
+        // широкая BACK (персиковая с коричневым текстом)
+        PrimaryVariant.PeachBack -> ButtonParams(
+            family = FontFamily.SansSerif,
+            weight = FontWeight.ExtraBold,
+            size = 22.sp,
+            line = 26.sp,
+            padH = 40.dp,
+            minHeight = 60.dp,
+            cornerRadius = 26.dp,
+            bgIdle = Brush.horizontalGradient(
+                listOf(
+                    Color(0xFFFFE7D4),
+                    Color(0xFFFFB68B)
+                )
+            ),
+            bgPressed = Brush.horizontalGradient(
+                listOf(
+                    Color(0xFFF8D1B3),
+                    Color(0xFFE39268)
+                )
+            ),
+            borderColor = Color(0xFFE08E5C),
+            textColor = Color(0xFF5A3520) // коричневый
+        )
+    }
+
+    val backgroundBrush = if (pressed) params.bgPressed else params.bgIdle
+
+    val shape = RoundedCornerShape(params.cornerRadius)
 
     Box(
         modifier = modifier
-            .shadow(24.dp, shape, clip = false, spotColor = Color(0x80343434))
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .shadow(
+                elevation = 6.dp,
+                shape = shape,
+                clip = false,
+                ambientColor = Color(0x33000000),
+                spotColor = Color(0x33000000)
+            )
             .clip(shape)
-            .background(gradient)
-            .padding(vertical = 8.dp, horizontal = params.padH)
-            .clickable(interactionSource = interaction, indication = null, onClick = onClick),
+            .background(backgroundBrush)
+            .border(width = 1.dp, color = params.borderColor, shape = shape)
+            .defaultMinSize(minHeight = params.minHeight)
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                onClick = onClick
+            )
+            .padding(
+                horizontal = params.padH,
+                vertical = 10.dp
+            ),
         contentAlignment = Alignment.Center
     ) {
-        GradientOutlinedText(
-            text = text,
+        Text(
+            text = text.uppercase(),
+            color = params.textColor,
+            fontFamily = params.family,
+            fontWeight = params.weight,
             fontSize = params.size,
-            gradientColors = listOf(textColor, textColor),
+            lineHeight = params.line,
+            letterSpacing = 1.sp
         )
     }
 }
 
-/** Параметры кнопки (типографика + горизонтальный паддинг) */
+/** Параметры кнопки (типографика + размеры + цвета) */
 @Stable
 private data class ButtonParams(
     val family: FontFamily,
     val weight: FontWeight,
     val size: TextUnit,
     val line: TextUnit,
-    val padH: Dp
+    val padH: Dp,
+    val minHeight: Dp,
+    val cornerRadius: Dp,
+    val bgIdle: Brush,
+    val bgPressed: Brush,
+    val borderColor: Color,
+    val textColor: Color
 )

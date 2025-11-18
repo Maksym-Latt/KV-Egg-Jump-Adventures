@@ -1,6 +1,7 @@
 package com.egg.jumpadventures.ui.main.gamescreen.overlay
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -32,21 +33,31 @@ import com.egg.jumpadventures.ui.main.component.StartPrimaryButton
 @Composable
 fun GameSettingsOverlay(
     onResume: () -> Unit,
-    onRetry: () -> Unit,
+    onRetry: () -> Unit,   // оставляем в сигнатуре, но больше не используем
     onHome: () -> Unit,
 ) {
+    // ---------- форма и фон карточки ----------
     val cardShape = RoundedCornerShape(26.dp)
-    val panelGrad = Brush.verticalGradient(listOf(Color(0xFFFFE6FE), Color(0xFFCC5EFF)))
+    val panelGrad = Brush.verticalGradient(
+        listOf(
+            Color(0xff78318a),
+            Color(0xffb02d87),
+            Color(0xffd57aa1)
+        )
+    )
 
     Box(
-        Modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(Color(0x99000000))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
-            ) { onResume() }
+            ) {
+                onResume()
+            }
     ) {
+        // ---------- кнопка "назад" сверху слева ----------
         SecondaryBackButton(
             onClick = onResume,
             modifier = Modifier
@@ -54,45 +65,48 @@ fun GameSettingsOverlay(
                 .size(60.dp)
         )
 
+        // ---------- центральная панель паузы ----------
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
+                .fillMaxWidth(0.8f)
                 .clip(cardShape)
                 .background(panelGrad)
-                .padding(vertical = 20.dp, horizontal = 18.dp)
+                .padding(vertical = 22.dp, horizontal = 20.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
-                ) {}
+                ) { }
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
+                // ---------- заголовок ----------
                 GradientOutlinedText(
                     text = "Pause",
-                    fontSize = 36.sp,
+                    fontSize = 32.sp,
                     gradientColors = listOf(Color.White, Color.White)
                 )
 
+                // ---------- кнопка Resume (оранжевая) ----------
                 OrangePrimaryButton(
                     text = "Resume",
                     onClick = onResume,
-                    modifier = Modifier.fillMaxWidth(0.8f)
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .height(52.dp)
                 )
-                StartPrimaryButton(
-                    text = "Try Again",
-                    onClick = onRetry,
-                    modifier = Modifier.fillMaxWidth(0.8f)
-                )
-                SecondaryIconButton(
+
+                // ---------- кнопка Menu (персиковая) ----------
+                OrangePrimaryButton(
+                    text = "Menu",
                     onClick = onHome,
-                    modifier = Modifier.size(56.dp)
-                ) {
-                    Text(text = "Menu", color = Color.White, fontSize = 16.sp)
-                }
-                Spacer(modifier = Modifier.height(4.dp))
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .height(52.dp)
+                )
             }
         }
     }

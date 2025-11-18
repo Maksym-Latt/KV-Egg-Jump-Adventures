@@ -6,8 +6,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,10 +18,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -29,20 +29,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.egg.jumpadventures.R
+import com.egg.jumpadventures.ui.main.component.PrimaryButton
+import com.egg.jumpadventures.ui.main.component.PrimaryVariant
 import com.egg.jumpadventures.ui.main.component.SecondaryIconButton
-import com.egg.jumpadventures.ui.main.component.StartPrimaryButton
+import kotlin.math.min
 
 @Composable
 fun MenuScreen(
@@ -50,7 +53,6 @@ fun MenuScreen(
     onStartGame: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenShop: () -> Unit,
-    onOpenPrivacy: () -> Unit,
 ) {
     val transition = rememberInfiniteTransition(label = "chicken_float")
     val floatOffset = transition.animateFloat(
@@ -66,23 +68,22 @@ fun MenuScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFFFFF4FF),
-                        Color(0xFFFFE0D2),
-                        Color(0xFFFFE7C6)
-                    )
-                )
-            )
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.bg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 24.dp, vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.Top
         ) {
+            // ---------- верхний ряд ---------- //
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -96,25 +97,27 @@ fun MenuScreen(
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = "Open settings",
-                        tint = Color.White,
+                        tint = Color(0xFFF69533),
                         modifier = Modifier.fillMaxSize(0.82f)
                     )
                 }
             }
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Spacer(modifier = Modifier.weight(0.3f))
+
+            // ---------- блок титула ---------- //
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.title_chicken),
-                    contentDescription = null,
+                FloatingChickenCanvas(
+                    offsetNorm = floatOffset.value / 8f,
                     modifier = Modifier
-                        .padding(top = 8.dp, bottom = 12.dp)
-                        .scale(1.05f)
-                        .alpha(0.95f)
-                        .offset(y = floatOffset.value.dp),
-                    contentScale = ContentScale.Fit
+                        .fillMaxWidth()
+                        .height(170.dp)
                 )
+
                 Image(
                     painter = painterResource(id = R.drawable.title_text),
                     contentDescription = null,
@@ -124,17 +127,18 @@ fun MenuScreen(
                     contentScale = ContentScale.FillWidth
                 )
             }
-
+            Spacer(modifier = Modifier.weight(0.3f))
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                StartPrimaryButton(
+                PrimaryButton(
                     text = "Play",
                     onClick = onStartGame,
                     modifier = Modifier
                         .fillMaxWidth(0.68f)
-                        .height(64.dp)
+                        .height(64.dp),
+                    variant = PrimaryVariant.Orange
                 )
 
                 if (state.lastHeight > 0) {
@@ -149,86 +153,96 @@ fun MenuScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Tap the gear for settings or read privacy",
-                    style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF8C674D))
-                )
             }
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 20.dp)
-        ) {
-            Text(
-                text = "Privacy",
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(Color(0x33FFFFFF))
-                    .padding(horizontal = 18.dp, vertical = 8.dp)
-                    .shadow(0.dp),
-                color = Color(0xFF7B4A2D),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            )
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .padding(4.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(Color.Transparent)
-                    .clickableWithRipple(onOpenPrivacy)
-            )
+            Spacer(modifier = Modifier.weight(1.1f))
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
+private fun FloatingChickenCanvas(
+    offsetNorm: Float,
+    modifier: Modifier = Modifier
+) {
+    val chickenBitmap = ImageBitmap.imageResource(id = R.drawable.title_chicken)
+
+    Canvas(modifier = modifier) {
+        val canvasW = size.width
+        val canvasH = size.height
+
+        if (canvasW <= 0f || canvasH <= 0f) return@Canvas
+
+        val imgW = chickenBitmap.width.toFloat()
+        val imgH = chickenBitmap.height.toFloat()
+
+        val scale = min(
+            canvasW * 0.5f / imgW,
+            canvasH * 0.8f / imgH
+        )
+
+        val dstW = imgW * scale
+        val dstH = imgH * scale
+
+        val centerX = canvasW / 2f
+        val centerY = canvasH / 2f
+
+        val margin = 8.dp.toPx()
+
+        val maxShift = (canvasH / 2f) - (dstH / 2f) - margin
+        val clampedOffset = offsetNorm.coerceIn(-1f, 1f)
+
+        val currentY = centerY + maxShift * clampedOffset
+
+        val left = centerX - dstW / 2f
+        val top = currentY - dstH / 2f
+
+        drawImage(
+            image = chickenBitmap,
+            srcOffset = IntOffset.Zero,
+            srcSize = IntSize(chickenBitmap.width, chickenBitmap.height),
+            dstOffset = IntOffset(left.toInt(), top.toInt()),
+            dstSize = IntSize(dstW.toInt(), dstH.toInt())
+        )
+    }
+}
+
+
+@Composable
 private fun ShopBadge(onOpenShop: () -> Unit, coins: Int) {
-    Row(
+    Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(18.dp))
+            .size(96.dp)
+            .clip(RoundedCornerShape(22.dp))
             .background(
                 Brush.verticalGradient(
-                    listOf(Color(0xFFFFF1D9), Color(0xFFFFC796))
+                    listOf(
+                        Color(0x40b68e6c),
+                        Color(0x40b68e6c)
+                    )
                 )
             )
-            .shadow(8.dp, RoundedCornerShape(18.dp), clip = false)
-            .padding(horizontal = 14.dp, vertical = 12.dp)
-            .clickableWithRipple(onOpenShop),
-        verticalAlignment = Alignment.CenterVertically
+            .clickable(onClick = onOpenShop),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFFFE6B0)),
-            contentAlignment = Alignment.Center
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.coin),
-                contentDescription = null,
-                modifier = Modifier.size(26.dp)
+                painter = painterResource(id = R.drawable.egg_2),
+                contentDescription = "New Skin",
+                modifier = Modifier.size(50.dp)
             )
-        }
-        Spacer(modifier = Modifier.width(10.dp))
-        Column {
+
             Text(
-                text = "New skin",
-                color = Color(0xFF7B4A2D),
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-            )
-            Text(
-                text = "$coins coins",
-                color = Color(0xFF9A6A46),
+                text = "NEW SKIN",
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp
+                fontSize = 13.sp,
+                color = Color.White.copy(alpha = 0.92f),
+                letterSpacing = 1.sp
             )
         }
     }
 }
-
-private fun Modifier.clickableWithRipple(onClick: () -> Unit): Modifier =
-    this.then(androidx.compose.foundation.clickable(onClick = onClick))

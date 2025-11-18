@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,78 +38,74 @@ import com.egg.jumpadventures.ui.main.settings.SettingsViewModel
 @Composable
 fun SettingsOverlay(
     onClose: () -> Unit,
-    onPrivacy: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val cardShape = RoundedCornerShape(18.dp)
-    val panelGrad = Brush.verticalGradient(listOf(Color(0xFFFFE6FE), Color(0xFFCC5EFF)))
     val ui by viewModel.ui.collectAsStateWithLifecycle()
 
+    val panelShape = RoundedCornerShape(26.dp)
+
+    val panelGradient = Brush.verticalGradient(
+        listOf(
+            Color(0xff78318a),
+            Color(0xffb02d87),
+            Color(0xffd57aa1)
+        )
+    )
+
     Box(
-        Modifier
+        modifier = Modifier
             .fillMaxSize()
-            .background(Color(0x99000000))
+            .background(Color(0x99aa9393))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) { onClose() }
     ) {
+        // ---------- BACK BUTTON ---------- //
         SecondaryBackButton(
             onClick = onClose,
             modifier = Modifier
-                .padding(start = 16.dp, top = 24.dp)
-                .size(60.dp)
+                .padding(start = 20.dp, top = 24.dp)
+                .size(58.dp)
         )
 
+        // ---------- CENTER PANEL ---------- //
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .clip(cardShape)
-                .background(panelGrad)
-                .border(2.dp, Color.White.copy(alpha = 0.4f), cardShape)
-                .padding(vertical = 20.dp, horizontal = 18.dp)
+                .fillMaxWidth(0.78f)
+                .clip(panelShape)
+                .background(panelGradient)
+                .padding(horizontal = 28.dp, vertical = 24.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) {}
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 GradientOutlinedText(
-                    text = "Settings",
+                    text = "SETTINGS",
                     fontSize = 30.sp,
                     gradientColors = listOf(Color.White, Color.White)
                 )
 
                 ToggleRow(
-                    title = "Music",
+                    title = "MUSIC",
                     checked = ui.musicVolume > 0,
                     onCheckedChange = viewModel::toggleMusic
                 )
                 ToggleRow(
-                    title = "Sounds",
+                    title = "SOUNDS",
                     checked = ui.soundVolume > 0,
                     onCheckedChange = viewModel::toggleSound
                 )
                 ToggleRow(
-                    title = "Vibration",
+                    title = "VIBRATION",
                     checked = ui.vibrationEnabled,
                     onCheckedChange = viewModel::toggleVibration
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Privacy policy",
-                    color = Color.White,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0x33FFFFFF))
-                        .padding(horizontal = 20.dp, vertical = 10.dp)
-                        .clickable { onPrivacy() },
-                    fontSize = 14.sp
                 )
             }
         }
@@ -124,13 +121,19 @@ private fun ToggleRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color(0x33FFFFFF))
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.15f))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = title, color = Color.White, fontSize = 18.sp)
+        Text(
+            text = title,
+            color = Color.White,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
