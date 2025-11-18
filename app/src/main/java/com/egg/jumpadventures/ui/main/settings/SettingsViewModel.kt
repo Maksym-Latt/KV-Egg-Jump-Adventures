@@ -22,13 +22,15 @@ class SettingsViewModel @Inject constructor(
     init {
         val music = repo.getMusicVolume()
         val sound = repo.getSoundVolume()
+        val vibration = repo.isVibrationEnabled()
         _ui.value = SettingsUiState(
             musicVolume = music,
             soundVolume = sound,
-            vibrationEnabled = true
+            vibrationEnabled = vibration
         )
         audio.setMusicVolume(music)
         audio.setSoundVolume(sound)
+        audio.setVibrationEnabled(vibration)
     }
 
     fun setMusicVolume(value: Int) {
@@ -55,5 +57,7 @@ class SettingsViewModel @Inject constructor(
 
     fun toggleVibration(enabled: Boolean) {
         _ui.value = _ui.value.copy(vibrationEnabled = enabled)
+        viewModelScope.launch { repo.setVibrationEnabled(enabled) }
+        audio.setVibrationEnabled(enabled)
     }
 }
